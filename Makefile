@@ -3,21 +3,21 @@
 #and may not be redistributed without written permission.
 
 #OBJS specifies which files to compile as part of the project
-OBJS = casilla.cpp juego.cpp tablero.cpp main.cpp
+OBJS = $(shell find src -maxdepth 1 -type f -name '*.cpp')
 
 #CC specifies which compiler we're using
 CC = g++
 
 #COMPILER_FLAGS specifies the additional compilation options we're using
 # -w suppresses all warnings
-COMPILER_FLAGS = -w -g 
+COMPILER_FLAGS = -w -g -std=c++11
 
 #LINKER_FLAGS specifies the libraries we're linking against
-#LINKER_FLAGS = "-lSDL"
+LINKER_FLAGS = -lSDL2 -lSDL2_image -lSDL2_ttf
 
 #OBJ_NAME specifies the name of our exectuable
-OBJ_NAME = juego2048
+OBJ_NAME = EO2048
 
 #This is the target that compiles our executable
 all : $(OBJS)
-	$(CC) $(OBJS) $(COMPILER_FLAGS)  -o $(OBJ_NAME) #$(LINKER_FLAGS)
+	$(CC) $(OBJS) $(COMPILER_FLAGS) -o $(OBJ_NAME) $(LINKER_FLAGS)

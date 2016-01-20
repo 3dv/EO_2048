@@ -1,92 +1,134 @@
 #include "juego.hpp"
 
-juego::juego( int dim ){
-  
-  tabla = new tablero(dim);
-  estado = EN_JUEGO;
-  puntaje = 0;
-  jugada[0] = 0;
-  jugada[1] = 0;
-  
-  tabla->rellenar_casilla();
-  tabla->rellenar_casilla();
-  tabla->imprimir_tablero();
-  
+juego::juego(){
+
+	srand(time(NULL));
+
+	tabla = NULL;
+	//vent = new ventana();
+
+	estadoAnterior = VACIO;
+	estado = BIENVENIDA;
+	puntaje = 0;
+	jugada[0] = 0;
+	jugada[1] = 0;
+
+	/*tabla->rellenar_casilla();
+	   tabla->rellenar_casilla();
+	   tabla->imprimir_tablero();*/
+
 }
 
-juego::~juego(){ 
-  delete tabla;
-  
+juego::~juego(){
+	delete tabla;
+
 }
 
-void juego::pedir_jugada(){
-  int dir = -1;
-  std::cout << " Ingrese 0 para salir\n ";
-  while (dir!= 0 && dir!=8 && dir!=4 && dir!=5  && dir!=6){
-    std::cout << " Introduzca su jugada ( arriba: 8, izquierda: 4, abajo: 5, derecha: 6): ";
-    std::cin >> dir;
-    switch (dir){
-      case 5: // abajo
+void juego::iniciar_juego( SDL_Renderer* dibujante, int dim ){
+	estadoAnterior = estado;
+	estado = EN_JUEGO;
+	if( !tabla ) {
+		tabla = new tablero(dim);
+
+		tabla->rellenar_casilla();
+		tabla->rellenar_casilla();
+		tabla->imprimir_tablero(dibujante);
+	}
+}
+
+tipo_estado juego::obtener_estado(){
+	return estado;
+}
+
+tipo_estado juego::obtener_estado_anterior(){
+	return estadoAnterior;
+}
+
+void juego::igualarEstado(){
+	estadoAnterior = estado;
+}
+
+bool juego::procesar_jugada(direccionJugada dir){
+	//int dir = -1;
+	//std::cout << " Ingrese 0 para salir\n ";
+	//while (dir!= 0 && dir!=8 && dir!=4 && dir!=5  && dir!=6) {
+	std::cout << " la jugada es " << dir << std::endl;
+	//std::cin >> dir;
+	switch (dir) {
+	case ABAJO:         // abajo
 		jugada[0] = 0;
 		jugada[1] = 1;
+		return true;
 		break;
-      case 8: // arriba
+	case ARRIBA:         // arriba
 		jugada[0] = 0;
 		jugada[1] = -1;
+		return true;
 		break;
-      case 4: // izquierda
+	case IZQUIERDA:         // izquierda
 		jugada[0] = -1;
 		jugada[1] = 0;
+		return true;
 		break;
-      case 6: // derecha
+	case DERECHA:         // derecha
 		jugada[0] = 1;
 		jugada[1] = 0;
-		break; 
-      case 0: // Salir del juego
-		std::cout << " \tGracias por jugar: ¡hasta la próxima!" << std::endl;
-    estado = FINALIZADO;
+		return true;
 		break;
-      default:
+	case SALIR:         // Salir del juego
+		std::cout << " \tGracias por jugar: ¡hasta la próxima!" << std::endl;
+		estado = FINALIZADO;
+		return false;
+		break;
+	default:
 		std::cout << " Jugada "<< dir << " no aceptada " << std::endl;
-    tabla->imprimir_tablero();
-    }
-  }
+		return false;
+		//tabla->imprimir_tablero();
+	}
+	//}
+	//tabla->imprimir_tablero();
 }
 
 /* Metodo Validar jugada: evalua que la jugada ingresada este dentro del rango [0,dim]
-* que la casilla siguiente esté vacia y sino que esté ocupada con un valor igual a la 
-casilla sobre la que se itera */
+ * que la casilla siguiente esté vacia y sino que esté ocupada con un valor igual a la
+   casilla sobre la que se itera */
 
 bool juego::validar_jugada(int i, int j){
 
-  int dim = tabla->ver_dimension();
-    /* si (pos > 0 && pos < dim) entonces:
-   *	 si (casilla_sig.esta_vacia())
-   * 	  entonces retorna true
-   * 	 de lo contrario
-   * 		si (casilla_sig.valor() == casilla_act.valor() & 	no_sumada) entonces
-   * 			retorna true
-   * 		de lo contrario: 
-   * 			retonar falso
-   *   de lo contrario: 
-   * 	 retorna falso
-   */
-  
-  if (  ((i+jugada[0]) >= 0) && ((i+jugada[0]) < dim )
-   && ((j+jugada[1]) >= 0) && ((j+jugada[1]) < dim) ){
-    if (tabla->obtener_casilla( i+jugada[0], j+jugada[1] )->vacia()) 
-      return true;
-    else{
-      if( (tabla->obtener_casilla( i+jugada[0], j+jugada[1] )->ver_valor() == tabla->obtener_casilla( i, j )->ver_valor() ) && !tabla->obtener_casilla( i+jugada[0], j+jugada[1] )->sumada() && 
-          !tabla->obtener_casilla( i, j )->sumada() )
-	return true;
-      else 
-	return false;
-    }
-   }
-     else
-	return false;
-  ;
+	int dim = tabla->ver_dimension();
+	casilla* casilla_act = tabla->obtener_casilla( i, j );
+	casilla* casilla_sig = tabla->obtener_casilla( i+jugada[0], j+jugada[1] );
+
+	/* si (pos > 0 && pos < dim) entonces:
+	 *	 si (casilla_sig.esta_vacia())
+	 *    entonces retorna true
+	 *   de lo contrario
+	 *    si (casilla_sig.valor() == casilla_act.valor() &  no_sumada) entonces
+	 *      retorna true
+	 *    de lo contrario:
+	 *      retonar falso
+	 *   de lo contrario:
+	 *   retorna falso
+	 */
+
+	if (  ((i+jugada[0]) >= 0) && ((i+jugada[0]) < dim )
+	      && ((j+jugada[1]) >= 0) && ((j+jugada[1]) < dim) ) {
+		if (casilla_sig->vacia())
+			return true;
+		else{
+			if(
+			        ( casilla_act->ver_valor() == casilla_sig->ver_valor() ) &&
+			        !casilla_sig->sumada() &&
+			        !casilla_act->sumada()
+			        )
+				return true;
+			else
+				return false;
+		}
+	}
+	else
+		return false;
+	;
 }
 
 void juego::mover(int i, int j){
@@ -99,59 +141,58 @@ void juego::mover(int i, int j){
 bool juego::ejecutar_jugada(){
 
 	/*int Icero = 0;
-	int Ifinal = tabla->ver_dimension();
+	   int Ifinal = tabla->ver_dimension();
 
-	int Jcero = tabla->ver_dimension()-1;
-	int Jfinal = 0;*/
+	   int Jcero = tabla->ver_dimension()-1;
+	   int Jfinal = 0;*/
 
 	int dim = tabla->ver_dimension();
 	bool haMovido = false;
-	
-  for (int i = 0; i < dim; i++){
-	  //std::cout << "moviendo en i = " << i << std::endl;
-	  for (int j = 0; j < dim; j++){
-		  
-		  //-- verificaremos la jugada y haremos que la matriz se recorra en el sentido deseado según la jugada.
-		  int __i;
-		  int __j;
-		  //int __jIte = dim;
 
-		  if ( jugada[1] == 1 ){ // abajo
-			  __i = i;
-			  __j = dim-1-j;
-		  }else{
-			  if ( jugada[1] == -1 ){ //arriba
-				  __i = i;
-				  __j = j;
-			  }else{
-				  if ( jugada[0] == 1 ){ //derecha
-					  __i = dim-1-j;
-					  __j = i;
-				  }else{
-					  if ( jugada[0] == -1 ){ // izquierda
-						  __i = j;
-						  __j = i;
-					  }
-				  }
-			  }
-		  }
-		  
-		  //std::cout << "parado en i, j = " << __i <<", " << __j << std::endl;
+	for (int i = 0; i < dim; i++) {
+		//std::cout << "moviendo en i = " << i << std::endl;
+		for (int j = 0; j < dim; j++) {
 
-		  if ( !tabla->obtener_casilla( __i, __j )->vacia() ){
+			//-- verificaremos la jugada y haremos que la matriz se recorra en el sentido deseado según la jugada.
+			int __i;
+			int __j;
+
+			if ( jugada[1] == 1 ) { // abajo
+				__i = i;
+				__j = dim-1-j;
+			}else{
+				if ( jugada[1] == -1 ) { //arriba
+					__i = i;
+					__j = j;
+				}else{
+					if ( jugada[0] == 1 ) { //derecha
+						__i = dim-1-j;
+						__j = i;
+					}else{
+						if ( jugada[0] == -1 ) { // izquierda
+							__i = j;
+							__j = i;
+						}
+					}
+				}
+			}
+
+			//std::cout << "parado en i, j = " << __i <<", " << __j << std::endl;
+
+			if ( !tabla->obtener_casilla( __i, __j )->vacia() ) {
 
 				int despj = 0;
 				int despi = 0;
 				int itera = 0;
 				bool continua = true;
 
-				while( continua ){
+				while( continua ) {
 
 					despj = ( itera * jugada[1] );
 					despi = ( itera * jugada[0] );
 					//std::cout << "casilla con elemento-> " << tabla->obtener_casilla(__i+despi, __j+despj)->ver_valor() << ", se buscara en i,j->" << __i+despi+jugada[0] << ","<< __j+despj+jugada[1] << ", despi-> " << despi << ", despj-> " << despj << std::endl;
 					continua = validar_jugada(__i+despi,__j+despj);
-					if (continua){
+					if (continua) {
 						mover(__i+despi,__j+despj);
 						haMovido = true;
 					}
@@ -164,52 +205,75 @@ bool juego::ejecutar_jugada(){
 				//std::cout << "casilla vacia!" << std::endl;
 			}
 
-	  }
-  }
+		}
+	}
 
- 
+
 	if(haMovido)
-	tabla->rellenar_casilla();
+		tabla->rellenar_casilla();
 	tabla->limpiar_sumas();
-  tabla->imprimir_tablero();
-  std::cout << "\t Puntaje: " << this->puntaje << std::endl;
-/*   if ( !tabla->jugada_disponible( ) ){
-    return false;
-    // final del juego -- sin casillas disponibles ni jugada posible
-	  }*/
-  return true;
+	//tabla->imprimir_tablero( dibujante );
+	std::cout << "\t Puntaje: " << this->puntaje << std::endl;
+	/*if ( !tabla->jugada_disponible( ) ){
+	   return false;
+	   final del juego -- sin casillas disponibles ni jugada posible
+	   }*/
+	return true;
 }
 
-  void juego::finalizar_juego(){
-           
-	  std::cout << "\n\t¡Juego terminado!" << std::endl;
-    std::cout << "\t Puntaje: " << this->puntaje << std::endl;
-	  estado = FINALIZADO;
-  }
-      
+void juego::finalizar_juego(){
+
+	std::cout << "\n\t¡Juego terminado!" << std::endl;
+	std::cout << "\t Puntaje: " << this->puntaje << std::endl;
+	estado = FINALIZADO;
+}
+
 /* Metodo Jugar: evalua el estado del juego, pide la jugada
  * llama a ejecutar la jugada y por ultimo imprime el tablero */
-  void juego::jugar(){
-    
-    while ( estado == EN_JUEGO ){
-      if( tabla->jugada_disponible() ){
-        pedir_jugada();
-        ejecutar_jugada();
-      }else{
-        finalizar_juego();
-      }
-    }
-  }
-/*
-    while ( estado == EN_JUEGO ){
-      pedir_jugada();
-      if( ejecutar_jugada() ){
-        tabla->imprimir_tablero();
-      }else{
-        finalizar_juego();
-      }
-    }
-  }
-*/
+void juego::jugar( SDL_Renderer* dibujante, direccionJugada dir){
+
+	if( tabla->jugada_disponible() ) {
+		if( procesar_jugada( dir ) ) {
+			ejecutar_jugada();
+		}
+		tabla->imprimir_tablero(dibujante);
+	}else{
+		finalizar_juego();
+	}
+	/*while ( estado == EN_JUEGO ) {
+	   bool salir = false;
+	   SDL_Event evento;
+
+	   while ( !salir ) {
+	        while( SDL_PollEvent( &evento ) != 0 ){
+	                if ( evento.type == SDL_QUIT )
+	                      salir = true;
+	        }
+	        //vent->dibujar();
+	        if( tabla->jugada_disponible() ) {
+	                pedir_jugada();
+	                ejecutar_jugada();
+	        }else{
+	                finalizar_juego();
+	        }
+
+	   }
+
+	   delete vent;*/
+
+}
+
+/*void juego::dibujarForma( SDL_Renderer* dibujante, direccionJugada dir){
+
+   int x = 60;
+   int y = 250;
+
+   procesar_jugada( dir );
+   jugar( dibujante );
 
 
+   SDL_Rect fillRect = { x, y, 420, 420 };
+   SDL_SetRenderDrawColor( dibujante, 0xB5, 0xB5, 0xB5, 0xFF );
+   SDL_RenderFillRect( dibujante, &fillRect );
+
+   }*/

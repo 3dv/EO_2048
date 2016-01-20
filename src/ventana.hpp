@@ -2,22 +2,30 @@
 #define VENTANA
 
 #include <iostream>
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_image.h>
+
+#include "juego.hpp"
 
 class ventana{
     public:
       ventana();
       ~ventana();
-      void dibujar();
+      void dibujar(direccionJugada dir);
+      void iniciar_juego(int);
 
 
     private:
+      TTF_Font* fTitulo;
+      TTF_Font* fCuerpo;
       SDL_Window* miVent;
       SDL_Renderer* miRender;
-      //SDL_Texture* miText;
+      SDL_Texture* miTextura;
       int ancho;
       int alto;
+      juego* partida;
+
+      void dibujarTexto( float x, float y, std::string texto, TTF_Font* fuente );
+      void dibujarInicio();
+      void dibujarTablero(direccionJugada dir);
 };
 
 #endif
